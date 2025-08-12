@@ -6922,6 +6922,9 @@ void setwfrange() {
 
 void sync_cw_parameters()
 {
+	WK_set_wpm();
+	flrig_set_wpm();
+
 	active_modem->sync_parameters();
 	active_modem->update_Status();
 }
@@ -6940,14 +6943,13 @@ void cb_cntCW_WPM(Fl_Widget * w, void *v)
 
 	progdefaults.CWspeed = (int)cnt->value();
 LOG_INFO("%f WPM", progdefaults.CWspeed);
+
 	sldrCWxmtWPM->value(progdefaults.CWspeed);
 	cntr_nanoCW_WPM->value(progdefaults.CWspeed);
 
 	progdefaults.changed = true;
-	sync_cw_parameters();
 
-	if (progStatus.WK_online) WK_set_wpm();
-	flrig_set_wpm();
+	sync_cw_parameters();
 
 	restoreFocus(25);
 }
