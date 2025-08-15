@@ -85,6 +85,9 @@ decl {\#include "flslider2.h"} {public local
 decl {\#include "flmisc.h"} {public local
 }
 
+decl {\#include "cwsettings.h"} {private local
+}
+
 decl {\#include "logsupport.h"} {private local
 }
 
@@ -3605,6 +3608,7 @@ progdefaults.changed = true;}
         Fl_Check_Button btnCWuseSOMdecoding {
           label {SOM decoding}
           callback {progdefaults.CWuseSOMdecoding = o->value();
+if (cwsettings) btnCWSuseSOMdecoding->value(o->value());
 progdefaults.changed = true;}
           tooltip {Self Organizing Map Decoder} xywh {275 50 125 20} down_box DOWN_BOX value 1
           code0 {o->value(progdefaults.CWuseSOMdecoding);}
@@ -3620,6 +3624,7 @@ progdefaults.changed = true;}
         Fl_Check_Button btnCWrcvTrack {
           label {Track WPM}
           callback {progdefaults.CWtrack = o->value();
+if (cwsettings) btnCWSrcvTrack->value(o->value());
 progdefaults.changed = true;}
           tooltip {Automatic Rx speed tracking} xywh {275 108 80 20} down_box DOWN_BOX value 1
           code0 {o->value(progdefaults.CWtrack);}
@@ -3670,6 +3675,7 @@ progdefaults.changed = true;}
           Fl_Check_Button btnCWmfilt {
             label {Matched Filter}
             callback {progdefaults.CWmfilt = o->value();
+if (cwsettings) btnCWSmfilt->value(o->value());
 if (active_modem == cw_modem)
   active_modem->reset_rx_filter();
 progdefaults.changed = true;}
@@ -3679,6 +3685,7 @@ progdefaults.changed = true;}
           Fl_Counter cntCWbandwidth {
             label Bandwidth
             callback {progdefaults.CWbandwidth = (int)o->value();
+if (cwsettings) cntCWSbandwidth->value(o->value());
 if (active_modem == cw_modem)
   active_modem->reset_rx_filter();
 progdefaults.changed = true;}
@@ -3691,6 +3698,7 @@ progdefaults.changed = true;}
           Fl_Choice mnu_CW_fillen {
             label {Fil' Len'}
             callback {progdefaults.CW_fillen = o->value();
+if (cwsettings) mnu_CWS_fillen->value(o->value());
 if (active_modem == cw_modem)
   active_modem->reset_rx_filter();
 progdefaults.changed = true;} open

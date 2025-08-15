@@ -70,6 +70,7 @@ extern Fl_Double_Window *notify_window;
 extern Fl_Double_Window *dxcc_window;
 extern Fl_Double_Window	*dxcluster_viewer;
 extern Fl_Double_Window *rxaudio_dialog;
+extern Fl_Double_Window *cwsettings;
 
 extern Fl_Menu_Item 	menu_[];
 extern int 				main_menu_size;

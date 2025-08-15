@@ -1,0 +1,74 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0403
+i18n_type 1
+i18n_include {"gettext.h"}
+i18n_conditional {}
+i18n_gnu_function gettext
+i18n_gnu_static_function gettext_noop
+header_name {.h}
+code_name {.cxx}
+decl {\#include "confdialog.h"} {private local
+}
+
+Function {make_cwsettings()} {open
+} {
+  Fl_Window {} {open selected
+    xywh {648 317 854 26} type Double box DOWN_BOX resizable visible
+  } {
+    Fl_Check_Button btnCWSrcvTrack {
+      label {Track WPM}
+      callback {progdefaults.CWtrack = o->value();
+btnCWrcvTrack->value(o->value());
+progdefaults.changed = true;}
+      tooltip {Automatic Rx speed tracking} xywh {4 2 120 20} down_box DOWN_BOX value 1
+      code0 {o->value(progdefaults.CWtrack);}
+    }
+    Fl_Check_Button btnCWSuseSOMdecoding {
+      label {SOM decode}
+      callback {progdefaults.CWuseSOMdecoding = o->value();
+btnCWuseSOMdecoding->value(o->value());
+
+progdefaults.changed = true;}
+      tooltip {Self Organizing Map Decoder} xywh {125 2 120 20} down_box DOWN_BOX value 1
+      code0 {o->value(progdefaults.CWuseSOMdecoding);}
+    }
+    Fl_Check_Button btnCWSmfilt {
+      label {Matched Filter}
+      callback {progdefaults.CWmfilt = o->value();
+btnCWmfilt->value(o->value());
+if (active_modem == cw_modem)
+  active_modem->reset_rx_filter();
+progdefaults.changed = true;}
+      tooltip {Matched Filter bandwidth} xywh {250 2 120 20} down_box DOWN_BOX value 1
+      code0 {o->value(progdefaults.CWmfilt);}
+    }
+    Fl_Counter cntCWSbandwidth {
+      label Bandwidth
+      callback {progdefaults.CWbandwidth = (int)o->value();
+cntCWbandwidth->value(o->value());
+if (active_modem == cw_modem)
+  active_modem->reset_rx_filter();
+progdefaults.changed = true;}
+      tooltip {Range +/- wpm} xywh {380 2 120 20} align 1 minimum 50 maximum 500 step 5 value 200
+      code0 {o->value(progdefaults.CWbandwidth);}
+      code1 {o->labelsize(FL_NORMAL_SIZE);}
+      code2 {o->lstep(50);}
+      code3 {\#include "flslider2.h"}
+      class Fl_Counter2
+    }
+    Fl_Choice mnu_CWS_fillen {
+      label {Fil' Len'}
+      callback {progdefaults.CW_fillen = o->value();
+mnu_CW_fillen->value(o->value());
+if (active_modem == cw_modem)
+  active_modem->reset_rx_filter();
+progdefaults.changed = true;} open
+      tooltip {Filter length in samples} xywh {510 2 72 20} down_box BORDER_BOX align 8
+      code0 {o->add("128|256|512|1024");}
+      code1 {o->value(progdefaults.CW_fillen);}
+    } {}
+    Fl_Group {} {open
+      xywh {650 2 200 20} resizable
+    } {}
+  }
+}

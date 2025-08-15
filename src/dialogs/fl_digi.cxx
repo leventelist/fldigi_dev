@@ -129,6 +129,7 @@ extern Fl_Scroll       *wefax_pic_rx_scroll;
 #include "lookupcall.h"
 #include "fd_logger.h"
 #include "fd_view.h"
+#include "cwsettings.h"
 
 #include "font_browser.h"
 
@@ -256,6 +257,8 @@ Fl_Double_Window	*scopeview					= (Fl_Double_Window *)0;
 Fl_Double_Window	*field_day_viewer			= (Fl_Double_Window *)0;
 Fl_Double_Window	*dxcluster_viewer			= (Fl_Double_Window *)0;
 Fl_Double_Window	*rxaudio_dialog				= (Fl_Double_Window *)0;
+Fl_Double_Window	*cwsettings = (Fl_Double_Window *)0;
+
 
 Fl_Help_Dialog 		*help_dialog       = (Fl_Help_Dialog *)0;
 
@@ -1603,6 +1606,8 @@ void startup_modem(modem* m, int f)
 
 	wf->xmtlock->value(progStatus.tx_lock);
 	wf->xmtlock->do_callback();
+
+	if (m != cw_modem && cwsettings) cwsettings->hide();
 }
 
 void cb_mnuOpenMacro(Fl_Menu_*, void*) {
@@ -4227,12 +4232,28 @@ void cb_QRZ(Fl_Widget *b, void *)
 	restoreFocus(22);
 }
 
+void open_cwsettings()
+{
+	if (!cwsettings) cwsettings = make_cwsettings();
+	if (!cwsettings) return;
+	cwsettings->resize(fl_digi_main->x(), fl_digi_main->y() + fl_digi_main->h() + 28, fl_digi_main->w(), cwsettings->h());
+	if (cwsettings->visible())
+		cwsettings->hide();
+	else
+		cwsettings->show();
+}
+
 void status_cb(Fl_Widget *b, void *arg)
 {
 	if (Fl::event_button() == FL_RIGHT_MOUSE) {
 		trx_mode md = active_modem->get_mode();
 		if (md == MODE_FMT) open_config(TAB_FMT);
-		else if (md == MODE_CW) open_config(TAB_CW);
+		else if (md == MODE_CW) {
+			if ((Fl::event_state() & (FL_SHIFT)) == FL_SHIFT)
+				open_cwsettings();
+			else
+				open_config(TAB_CW);
+		}
 		else if (md == MODE_IFKP) open_config(TAB_IFKP);
 		else if (md == MODE_FSQ) open_config(TAB_FSQ);
 		else if (md >= MODE_MFSK_FIRST && md <= MODE_MFSK_LAST) open_config(TAB_MFSK);
@@ -4645,6 +4666,7 @@ bool clean_exit(bool ask) {
 	if (scopeview) scopeview->hide();
 	if (dlgViewer) dlgViewer->hide();
 	if (dlgLogbook) dlgLogbook->hide();
+	if (cwsettings) cwsettings->hide();
 
 	if (trx_state != STATE_RX) {
 LOG_INFO("Disable TUNE");

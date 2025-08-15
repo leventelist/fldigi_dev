@@ -414,6 +414,7 @@ endif
 FLDIGI_FL_SRC = \
 		debug/debug_dialog.fl \
 		dialogs/confdialog.fl \
+		dialogs/cwsettings.fl \
 		dialogs/notifydialog.fl \
 		dialogs/record_browse.fl \
 		dialogs/rxmon.fl \
@@ -530,6 +531,7 @@ fldigi_SOURCES += \
 	debug/debug.cxx \
 	debug/debug_dialog.cxx \
 	dialogs/confdialog.cxx \
+	dialogs/cwsettings.cxx \
 	dialogs/fl_digi.cxx \
 	dialogs/font_browser.cxx \
 	dialogs/htmlstrings.cxx \
@@ -779,6 +781,7 @@ EXTRA_fldigi_SOURCES += \
 	include/coordinate.h \
 	include/counties.h \
 	include/cw.h \
+	include/cwsettings.h \
 	include/data_io.h \
 	include/date.h \
 	include/debug.h \

@@ -23,6 +23,7 @@
 #include "icons.h"
 #include "Viewer.h"
 #include "pskrep.h"
+#include "cwsettings.h"
 #include "logsupport.h"
 #include "notify.h"
 #include "debug.h"
@@ -2896,6 +2897,7 @@ Fl_Check_Button *btnCWuseSOMdecoding=(Fl_Check_Button *)0;
 
 static void cb_btnCWuseSOMdecoding(Fl_Check_Button* o, void*) {
   progdefaults.CWuseSOMdecoding = o->value();
+  if (cwsettings) btnCWSuseSOMdecoding->value(o->value());
   progdefaults.changed = true;
 }
 
@@ -2911,6 +2913,7 @@ Fl_Check_Button *btnCWrcvTrack=(Fl_Check_Button *)0;
 
 static void cb_btnCWrcvTrack(Fl_Check_Button* o, void*) {
   progdefaults.CWtrack = o->value();
+  if (cwsettings) btnCWSrcvTrack->value(o->value());
   progdefaults.changed = true;
 }
 
@@ -2949,6 +2952,7 @@ Fl_Check_Button *btnCWmfilt=(Fl_Check_Button *)0;
 
 static void cb_btnCWmfilt(Fl_Check_Button* o, void*) {
   progdefaults.CWmfilt = o->value();
+  if (cwsettings) btnCWSmfilt->value(o->value());
   if (active_modem == cw_modem)
     active_modem->reset_rx_filter();
   progdefaults.changed = true;
@@ -2958,6 +2962,7 @@ Fl_Counter2 *cntCWbandwidth=(Fl_Counter2 *)0;
 
 static void cb_cntCWbandwidth(Fl_Counter2* o, void*) {
   progdefaults.CWbandwidth = (int)o->value();
+  if (cwsettings) cntCWSbandwidth->value(o->value());
   if (active_modem == cw_modem)
     active_modem->reset_rx_filter();
   progdefaults.changed = true;
@@ -2967,6 +2972,7 @@ Fl_Choice *mnu_CW_fillen=(Fl_Choice *)0;
 
 static void cb_mnu_CW_fillen(Fl_Choice* o, void*) {
   progdefaults.CW_fillen = o->value();
+  if (cwsettings) mnu_CWS_fillen->value(o->value());
   if (active_modem == cw_modem)
     active_modem->reset_rx_filter();
   progdefaults.changed = true;

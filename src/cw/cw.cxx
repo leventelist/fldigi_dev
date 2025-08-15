@@ -73,6 +73,8 @@
 #include "ICOMkeying.h"
 #include "YAESUkeying.h"
 
+#include "cwsettings.h"
+
 #include "audio_alert.h"
 
 #define FIR_DECIMATE    10 //16
@@ -295,6 +297,9 @@ cw::~cw() {
 	stop_gpio_thread();
 }
 
+static int debug_count = 0;
+static int filnbr = -1;
+
 cw::cw() : modem()
 {
 	cap |= CAP_BW;
@@ -349,7 +354,7 @@ cw::cw() : modem()
 
 	bandwidth = progdefaults.CWbandwidth;
 	if (use_matched_filter)
-		progdefaults.CWbandwidth = bandwidth = 2 * progdefaults.CWspeed;//5.0 * progdefaults.CWspeed / 1.2;
+		bandwidth = 2 * progdefaults.CWspeed;
 
 	switch (progdefaults.CW_fillen) {
 		case 0: FIR_FILTER_LEN = 128; break;
@@ -357,6 +362,8 @@ cw::cw() : modem()
 		case 2: default: FIR_FILTER_LEN = 512; break;
 		case 3: FIR_FILTER_LEN = 1024; break;
 	}
+	filnbr = progdefaults.CW_fillen;
+
 	cw_filter = new C_FIR_filter();
 	cw_filter->init_bandpass(FIR_FILTER_LEN, FIR_DECIMATE, 1.0*(frequency - bandwidth/2)/samplerate, 1.0*(frequency + bandwidth/2)/samplerate);
 
@@ -376,8 +383,10 @@ cw::cw() : modem()
 	sync_parameters();
 
 	REQ(static_cast<void (waterfall::*)(int)>(&waterfall::Bandwidth), wf, (int)bandwidth);
+	REQ(static_cast<int (Fl_Counter2::*)(double)>(&Fl_Counter2::value), cntCWbandwidth, (int)bandwidth);
+	if (cntCWSbandwidth)
+		REQ(static_cast<int (Fl_Counter2::*)(double)>(&Fl_Counter2::value), cntCWSbandwidth, (int)bandwidth);
 
-//	REQ(static_cast<int (Fl_Value_Slider2::*)(double)>(&Fl_Value_Slider2::value), cntCWbandwidth, (int)(bandwidth - bandwidth % 5));
 
 	update_Status();
 
@@ -391,17 +400,18 @@ cw::cw() : modem()
 
 }
 
-// SHOULD ONLY BE CALLED FROM THE rx_processing loop
-
 void cw::reset_rx_filter()
 {
 	if (first_time ||
 		(cw_freq != wf->Carrier()) ||
-		(progdefaults.CWmfilt && (cw_speed != progdefaults.CWspeed)) ||
 		(use_matched_filter != progdefaults.CWmfilt) ||
+		filnbr != progdefaults.CW_fillen ||
+		(progdefaults.CWmfilt && (cw_speed != progdefaults.CWspeed)) ||
 		(bandwidth != progdefaults.CWbandwidth && !use_matched_filter)) {
 
 		double sf = 0;
+
+		cw_speed = progdefaults.CWspeed;
 
 		if (first_time) {
 			if (progdefaults.StartAtSweetSpot) sf = progdefaults.CWsweetspot;
@@ -412,42 +422,28 @@ void cw::reset_rx_filter()
 
 		set_freq(cw_freq = sf);
 
-if (CW_DEBUG) 
-	std::cout << "rx: " << cw_freq << "\ntx: " << tx_frequency << std::endl;
-
 		use_matched_filter = progdefaults.CWmfilt;
 
+		bandwidth = progdefaults.CWbandwidth;
 		if (use_matched_filter)
-			progdefaults.CWbandwidth = bandwidth = 2 * progdefaults.CWspeed;//5.0 * progdefaults.CWspeed / 1.2;
-		else
-			bandwidth = progdefaults.CWbandwidth;
+			bandwidth = 2 * progdefaults.CWspeed;
 
+		filnbr = progdefaults.CW_fillen;
 		switch (progdefaults.CW_fillen) {
 			case 0: FIR_FILTER_LEN = 128; break;
 			case 1: FIR_FILTER_LEN = 256; break;
 			case 2: default: FIR_FILTER_LEN = 512; break;
 			case 3: FIR_FILTER_LEN = 1024; break;
 		}
+
 		cw_filter->init_bandpass(FIR_FILTER_LEN, FIR_DECIMATE, 1.0*(frequency - bandwidth/2)/samplerate, 1.0*(frequency + bandwidth/2)/samplerate);
 
 		FFTphase = 0;
 
-		REQ(static_cast<void (waterfall::*)(int)>(&waterfall::Bandwidth),
-			wf, (int)bandwidth);
-//		REQ(static_cast<int (Fl_Value_Slider2::*)(double)>(&Fl_Value_Slider2::value),
-//			sldrCWbandwidth, (int)bandwidth);
-
-if (CW_DEBUG) printf("FIR filter:\n\
-frequency: %f\n\
-bandwidth: %f\n\
-matched:   %d\n",
-	frequency, bandwidth, use_matched_filter);
-
-	}
-
-	if (first_time ||
-		cw_speed != progdefaults.CWspeed) {
-		cw_send_speed = cw_speed = progdefaults.CWspeed;
+		REQ(static_cast<void (waterfall::*)(int)>(&waterfall::Bandwidth), wf, (int)bandwidth);
+		REQ(static_cast<int (Fl_Counter2::*)(double)>(&Fl_Counter2::value), cntCWbandwidth, (int)bandwidth);
+		if (cntCWSbandwidth)
+			REQ(static_cast<int (Fl_Counter2::*)(double)>(&Fl_Counter2::value), cntCWSbandwidth, (int)bandwidth);
 
 		pipesize = (22 * samplerate * 12) / (progdefaults.CWspeed * 160);
 		if (pipesize < 0) pipesize = 512;
@@ -457,32 +453,42 @@ matched:   %d\n",
 		cw_noise_spike_threshold = two_dots / 4;
 		cw_send_dot_length = KWPM / cw_send_speed;
 		cw_send_dash_length = 3 * cw_send_dot_length;
+
 		symbollen = (int)round(samplerate * 1.2 / progdefaults.CWspeed);
 		fsymlen = (int)round(samplerate * 1.2 / progdefaults.CWfarnsworth);
 
-	int bfv = (symbollen / FIR_DECIMATE) / 4;
-	if (bfv < 1) bfv = 1;
+		int bfv = (symbollen / FIR_DECIMATE) / 4;
+		if (bfv < 1) bfv = 1;
 
-	bitfilter->setLength(bfv);
+		bitfilter->setLength(bfv);
 
-//if (CW_DEBUG) 
-printf("\
-Reset filter statitistics:\n\
-\
-   two dots:          %ld\n\
-   noise threshold:   %ld\n\
+if (CW_DEBUG)
+{
+	printf("\
+Statitistics: %d\n\
    dot length:        %ld\n\
    dash length:       %ld\n\
+   noise threshold:   %ld\n\
    symbollen:         %d\n\
    fsymlen:           %d\n\
-   bit filter length: %d\n",
-		two_dots,
-		cw_noise_spike_threshold,
+   bit filter length: %d\n\
+   frequency:         %f\n\
+   bandwidth:         %f\n\
+   matched:           %d\n\
+   FIR filter length: %d\n",
+		++debug_count,
 		cw_send_dot_length,
 		cw_send_dash_length,
+		cw_noise_spike_threshold,
 		symbollen,
 		fsymlen,
-		bfv);
+		bfv,
+		frequency,
+		bandwidth,
+		use_matched_filter,
+		FIR_FILTER_LEN
+	);
+}
 
 		phaseacc = 0.0;
 		FFTphase = 0.0;
@@ -493,8 +499,7 @@ Reset filter statitistics:\n\
 
 		rx_rep_buf.clear();
 
-
-	siglevel = 0;
+		siglevel = 0;
 
 	}
 	first_time = false;
@@ -879,7 +884,7 @@ if (CW_DEBUG) printf("RESET   ");
 				&& (cw_noise_spike_threshold > 0)
 				&& (element_usec < cw_noise_spike_threshold)) {
 				cw_receive_state = RS_IDLE;
-if (CW_DEBUG) printf("NOISE(%d): %f / %f\n", cw_receive_state, 1.0*element_usec, 1.0*cw_noise_spike_threshold);
+//if (CW_DEBUG) printf("NOISE(%d): %f / %f\n", cw_receive_state, 1.0*element_usec, 1.0*cw_noise_spike_threshold);
 				return;
 			}
 // Set up to track speed on dot-dash or dash-dot pairs for this test to work, we need a dot dash pair or a
@@ -907,11 +912,11 @@ if (CW_DEBUG) printf("NOISE(%d): %f / %f\n", cw_receive_state, 1.0*element_usec,
 // a dot is anything shorter than 2 dot times
 			if (element_usec <= two_dots) {
 				rx_rep_buf += CW_DOT_REPRESENTATION;
-if (CW_DEBUG) printf("dot length: %d\n", last_element);
+//if (CW_DEBUG) printf("dot length: %d\n", last_element);
 				cw_buffer[cw_ptr++] = (float)last_element;
 			} else {
 // a dash is anything longer than 2 dot times
-if (CW_DEBUG) printf("dash length: %d\n", last_element);
+//if (CW_DEBUG) printf("dash length: %d\n", last_element);
 				rx_rep_buf += CW_DASH_REPRESENTATION;
 				cw_buffer[cw_ptr++] = (float)last_element;
 			}
@@ -953,7 +958,7 @@ if (CW_DEBUG) printf("dash length: %d\n", last_element);
 				element_usec <= (4 * cw_receive_dot_length) &&
 				cw_receive_state == RS_AFTER_TONE) {
 // Look up the representation
-if (CW_DEBUG) printf("Decode buffer: %s [", rx_rep_buf.c_str());
+//if (CW_DEBUG) printf("Decode buffer: %s [", rx_rep_buf.c_str());
 				sc = morse->rx_lookup(rx_rep_buf);
 				if (sc.empty()) {
 // invalid decode... let user see error
@@ -966,7 +971,7 @@ if (CW_DEBUG) printf("Decode buffer: %s [", rx_rep_buf.c_str());
 				cw_rr_current = 0;	// reset decoding pointer
 				space_sent = false;
 				cw_ptr = 0;
-if (CW_DEBUG) printf("%s]\n", sc.c_str());
+//if (CW_DEBUG) printf("%s]\n", sc.c_str());
 				return;;
 			}
 // LONG time since keyup... check for a word space
@@ -974,7 +979,7 @@ if (CW_DEBUG) printf("%s]\n", sc.c_str());
 			if ((element_usec > (4 * cw_receive_dot_length)) && !space_sent) {
 				sc = " ";
 				space_sent = true;
-if (CW_DEBUG) printf("<SP>\n");
+//if (CW_DEBUG) printf("<SP>\n");
 				return;;
 			}
 			return;
