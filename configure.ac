@@ -3,7 +3,7 @@
 
 AC_COPYRIGHT([Copyright (C) 2007, 2008, 2009 Stelios Bounanos, M0GLD (m0gld AT enotty DOT net)])
 
-AC_PREREQ([2.71])
+AC_PREREQ([2.72])
 
 dnl major and minor must be integers; patch may
 dnl contain other characters or be empty
@@ -117,9 +117,6 @@ AC_C_VOLATILE
 # Checks for library functions.
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_ERROR_AT_LINE
-AC_PROG_GCC_TRADITIONAL
-dnl AC_FUNC_MALLOC
-dnl AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_STRFTIME
 AC_FUNC_STRTOD
