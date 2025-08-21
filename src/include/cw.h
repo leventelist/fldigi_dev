@@ -174,7 +174,7 @@ protected:
 	inline double nco(double freq);
 	inline double qsknco();
 	void	update_syncscope();
-	void    clear_syncscope();
+	void  clear_syncscope();
 	void	update_Status();
 	void	sync_parameters();
 	void	reset_rx_filter();

@@ -34,6 +34,7 @@
 #define PTT_H_
 
 #include <config.h>
+#include "gpio_common.h"
 
 #if HAVE_LINUX_PPDEV_H || HAVE_DEV_PPBUS_PPI_H
 #  define HAVE_PARPORT 1
@@ -80,6 +81,8 @@ private:
 	// tty and parport
 	int pttfd;
 	struct termios* oldtio;
+
+	gpio_num_t ptt_gpio_num;
 
 #if HAVE_UHROUTER
 	// uhrouter
