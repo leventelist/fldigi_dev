@@ -77,6 +77,8 @@
 
 #include "audio_alert.h"
 
+#include "gpio_common.h"
+
 #define FIR_DECIMATE    10 //16
 
 void start_cwio_thread();
@@ -90,6 +92,7 @@ static int nano_wpm = 0;
 static bool first_time = true;
 static double cw_freq = 1500;
 static int FIR_FILTER_LEN = 512;
+static gpio_num_t cw_gpio_num = GPIO_COMMON_UNKNOWN;
 
 const cw::SOM_TABLE cw::som_table[] = {
 	/* Prosigns */
@@ -395,6 +398,8 @@ cw::cw() : modem()
 	sig_avg = 0.0;
 
 	cal_wpm = 20;
+
+	cw_gpio_num = GPIO_COMMON_UNKNOWN;
 
 	start_cwio_thread();
 
@@ -2033,16 +2038,17 @@ static bool				CW_gpio_terminate_flag   = false;
 
 static cMorse			*gpio_morse = 0;
 
-static int				CW_gpio_fd = -1;
-
-static const char *gpio_name[] = {
-		"17", "18", "27", "22", "23",
-		"24", "25", "4",  "5",  "6",
-		"13", "19", "26", "12", "16",
-		"20", "21"};
-
 static void set_gpio_pin(bool key)
 {
+	int ret;
+
+	ret = gpio_common_set(cw_gpio_num, key);
+
+	if (ret < 0) {
+		LOG_ERROR("Error setting GPIO");
+	}
+
+	#if 0
 	static const char s_values_str[] = "01";
 
 	std::string portname = "/sys/class/gpio/gpio";
@@ -2092,6 +2098,7 @@ static void set_gpio_pin(bool key)
 			}
 		}
 	}
+	#endif
 }
 
 //----------------------------------------------------------------------
@@ -2224,14 +2231,13 @@ static void send_gpio(int c)
 	}
 }
 
-static int CW_gpio_ch;
-
 static void * CW_gpio_loop(void *args)
 {
 //	SET_THREAD_ID(CW_gpio_TID);
 
 	CW_gpio_thread_running   = true;
 	CW_gpio_terminate_flag   = false;
+	int CW_gpio_ch;
 
 	while(1) {
 		pthread_mutex_lock(&CW_gpio_mutex);
@@ -2319,9 +2325,11 @@ void start_gpio_thread(void)
 
 void cw::send_gpio_CW(int c)
 {
-	if (!CW_gpio_thread_running)
+	if (!CW_gpio_thread_running) {
+		LOG_INFO("Opening GPIO for CW keying");
+		cw_gpio_num = gpio_common_open_line("/dev/gpiochip0", 21);
 		start_gpio_thread();
-
+	}
 	guard_lock lk(&GPIO_fifo_mutex);
 	fifo.push(c);
 

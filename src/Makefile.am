@@ -706,7 +706,8 @@ fldigi_SOURCES += \
 	widgets/smeter.cxx \
 	widgets/vumeter.cxx \
 	wwv/analysis.cxx \
-	wwv/wwv.cxx
+	wwv/wwv.cxx \
+	gpio_common/gpio_common.c
 
 #	packet/pkt.cxx
 #	include/pkt.h
