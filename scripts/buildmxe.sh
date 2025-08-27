@@ -11,9 +11,11 @@
   --enable-static \
   --with-libintl-prefix=$PREFIX/gettext \
   PTW32_LIBS="-lpthread -lpcreposix -lpcre" \
-  FLTK_CONFIG=$PREFIX/bin/i686-w64-mingw32.static-fltk-config \
+  FLTK_CONFIG
+=$PREFIX/bin/i686-w64-mingw32.static-fltk-config \
+  CXXFLAGS=-w
 
-make -j 4
+time make -j 12
 
 $PREFIX/bin/i686-w64-mingw32.static-strip src/fldigi.exe
 $PREFIX/bin/i686-w64-mingw32.static-strip src/flarq.exe
