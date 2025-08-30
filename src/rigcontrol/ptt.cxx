@@ -253,8 +253,7 @@ void PTT::open_gpio(void)
 	#endif
 	if (ptt_gpio_num != GPIO_COMMON_UNKNOWN)
 		return;
-	ptt_gpio_num = gpio_common_open_line("/dev/gpiochip0", 12);
-	// Check for errors TODO!!!
+	ptt_gpio_num = gpio_common_open_line("/dev/gpiochip0", 12, false);
 	if (ptt_gpio_num == GPIO_COMMON_UNKNOWN) {
 		LOG_ERROR("Failed to open GPIO line");
 	}

@@ -2327,7 +2327,7 @@ void cw::send_gpio_CW(int c)
 {
 	if (!CW_gpio_thread_running) {
 		LOG_INFO("Opening GPIO for CW keying");
-		cw_gpio_num = gpio_common_open_line("/dev/gpiochip0", 21);
+		cw_gpio_num = gpio_common_open_line("/dev/gpiochip0", 21, false);
 		start_gpio_thread();
 	}
 	guard_lock lk(&GPIO_fifo_mutex);
